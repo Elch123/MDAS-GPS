@@ -1,0 +1,6 @@
+Start gpsfake with "gpsfake testdata.log"
+roscore
+rosrun gpsd_client gpsd_client _host:=localhost _port:=2947
+
+When there is a real GPS, the command will be: gpsd "path to device" ntrip://CaseWestern1:wsnewman@156.63.133.115:2101 (unless it's dgpsip)
+I still have to write a client for this.
