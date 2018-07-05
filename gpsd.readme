@@ -3,4 +3,272 @@ roscore
 rosrun gpsd_client gpsd_client _host:=localhost _port:=2947
 
 When there is a real GPS, the command will be: gpsd "path to device" ntrip://CaseWestern1:wsnewman@156.63.133.115:2101 (unless it's dgpsip)
+See output under topic fix with "rostopic echo fix"
 I still have to write a client for this.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://digitalrepository.unm.edu/cgi/viewcontent.cgi?article=1031&context=ece_rpts
+
+UNM Technical Report: EECE-TR-10-0004
+5.1    Sample Code for GPS Data Acquisition
+This code captures data from the GPS and shows it on the terminal.  Let us start creating a new package for our
+application called
+gps
+test
+pkg
+which should depend on the package
+gpsd
+client
+,
+$ sudo roscreate-pkg gps_test_pkg gpsd_client
+Now, go to the main folder of the
+gps
+test
+pkg
+package,
+$ roscd gps_test_pkg
+and create the
+src
+folder,
+$ mkdir src
+Use your favorite text editor to create a file named
+gpsTest.cpp
+and copy and paste the following C++ code on
+it,
+#include <iostream>
+#include <ros/ros.h>
+#include <gps
+common/GPSFix.h>
+class GpsTest
+{
+public:
+// Type for GPS messages
+gps
+common::GPSFix gpsMsg;
+// Constructor
+GpsTest(ros::NodeHandle nh
+) : n(nh
+)
+{
+// Subscribing to the topic /fix
+gps
+sub = n.subscribe("/fix", 100, &GpsTest::gpsCallback, this);
+}
+// Callback Function for the GPS
+void gpsCallback(const gps
+common::GPSFixConstPtr &msg)
+{
+gpsMsg =
+∗
+msg;
+}
+private:
+// Nodehandle
+ros::NodeHandle n;
+// Subscriber
+ros::Subscriber gps
+sub;
+}
+;
+int main(int argc, char
+∗∗
+argv)
+{
+// Variables to store the Latitude and Longitude from the GPS respectively
+double gpsLat = 0;
+19
+UNM Technical Report: EECE-TR-10-0004
+double gpsLong = 0;
+// Initializing the node for the GPS
+ros::init(argc, argv, "gps
+Subscriber");
+ros::NodeHandle nh
+;
+GpsTest
+∗
+p = new GpsTest(nh
+);
+// Getting the data from the GPS
+gpsLong = p->gpsMsg.longitude;
+gpsLat = p->gpsMsg.latitude;
+std::cout << "Current Latitude: " << gpsLat << std::endl;
+std::cout << "Current Longitude " << gpsLong << std::endl;
+ros::spin();
+return 0;
+}
+5.2    Compiling and Running the Node
+Now,  go to the main folder of the package and use your favorite text editor to add the following line to the
+CMakeList.txt
+file,
+rosbuild_add_executable(gpsTest src/gpsTest.cpp)
+Now, proceed to compile the package
+$ sudo rosmake --rosdep-install
+and you should be able to run the node,
+$ rosrun gps_test_pkg gpsTest
+and visualize the latitude and longitude coordinates given by the GPS on the terminal.
+5.3    The Code Explained
+Let us put the code in pieces to make it clear.  The following section of the code is for including the necessary
+C++ libraries and packages:
+001 #include <iostream>
+002 #include <ros/ros.h>
+003 #include <gps
+common/GPSFix.h>
+Then, we declare a class containing all the functions and variables we need to subscribe to the topic containing
+the GPS data,
+005 class GpsTest
+006
+{
+Afterwards, we declare the public attributes of the class. The variable gpsMsg stores the GPS data so we can
+access it from the main function,
+20
+UNM Technical Report: EECE-TR-10-0004
+007 public:
+008
+// Type for GPS messages
+009   gps
+common::GPSFix gpsMsg;
+Now, we create the constructor of the class.  In this case the constructor is the function which allows us to
+encapsulate the subscriber
+gps
+sub
+. We subscribe the node to the
+/fix
+topic using a callback of type class method
+(check section 2.3.2 at Publishers and Subscribers).  Since we are encapsulating the nodehandle
+n
+we pass the
+nodehandle
+nh
+from the main function via member initializers to the constructor.  The colon (:)  in the header
+separates the input parameter from the member initializer.
+011
+// Constructor
+012   GpsTest(ros::NodeHandle nh
+) : n(nh
+)
+013
+{
+014
+// Subscribing to the topic /fix
+015    gps
+sub = n.subscribe("/fix", 100, &GpsTest::gpsCallback, this);
+016
+}
+Then,  we  write  the  callback  signature  (check  section  2.2  at  Publishers  and  Subscribers)  for  the  callback
+associated to the GPS. Notice that this callback puts the information data from the GPS in the public variable
+gpsMsg
+.
+018
+// Callback Function for the GPS
+019   void gpsCallback(const gps
+common::GPSFixConstPtr &msg)
+020
+{
+021    gpsMsg =
+∗
+msg;
+022
+}
+Now, we encapsulate the nodehandle
+n
+and the subscriber
+gps
+sub
+by declaring them private variables in the
+class,
+024 private:
+025
+// Nodehandle
+026   ros::NodeHandle n;
+027
+028
+// Subscriber
+029   ros::Subscriber gps
+sub;
+030
+}
+;
+Then, the main function starts,
+032 int main(int argc, char
+∗∗
+argv)
+033
+{
+The following section initializes the node with the label
+gps
+Subscriber
+and declares the nodehandle
+nh
+.
+039
+// Initializing the node for the GPS
+040   ros::init(argc, argv, "gps
+Subscriber");
+041   ros::NodeHandle nh
+;
+In the following lines, the
+new
+operator assigns a storage of the proper size for the object
+p
+of type
+GpsTest
+.
+We call the constructor to initialize the object and to return a pointer to the type
+GpsTest
+.
+043   GpsTest
+∗
+p = new GpsTest(nh
+);
+Then, We use the arrow (
+−
+>
+) operator to access the member
+gpsMsg
+of the class
+GpsTest
+to get the latitude
+and longitude values from the GPS. We proceed to show the data on the terminal by using the conventional
+std::cout
+commands. Finally the
+ros::spin
+command waits for new messages from the GPS to run the callback.
+045
+// Getting the data from the GPS
+046   gpsLong = p->gpsMsg.longitude;
+047   gpsLat = p->gpsMsg.latitude;
+048
+21
+UNM Technical Report: EECE-TR-10-0004
+049   std::cout << "Current Latitude: " << gpsLat << std::endl;
+050   std::cout << "Current Longitude " << gpsLong << std::endl;
+051
+052   ros::spin();
+053   return 0;
+054
+}
+For a list of the available data given by the
+gps
+common/GPSFix
+messages besides latitude and longitude,
+chec
