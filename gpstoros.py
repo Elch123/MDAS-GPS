@@ -21,5 +21,7 @@ while(cont):
 		place=packet.position()
 		location=NavSatFix(latitude=place[0],longitude=place[1],altitude=packet.altitude(),position_covariance=[0,0,0,0,0,0,0,0,0],position_covariance_type=1)
 		pub.publish(location)
-	except(KeyboardInterrupt, SystemExit):
-		cont=False
+	except ZeroDivisionError:
+		pass
+
+
